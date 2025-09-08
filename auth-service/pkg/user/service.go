@@ -10,6 +10,8 @@ type Service interface {
 	Register(user *entities.User) (*entities.User, error)
 	Login(user *entities.User) (*entities.User, error)
 	FindByEmail(email string) (*entities.User, error)
+	FindByPhone(phone string) (*entities.User, error)
+	LoginByPhone(user *entities.User) (*entities.User, error)
 }
 
 type service struct {
@@ -47,6 +49,25 @@ func (s *service) Login(req *entities.User) (*entities.User, error) {
 
 func (s *service) FindByEmail(email string) (*entities.User, error) {
 	user, err := s.repo.FindByEmail(email)
-
 	return user, err
+}
+
+func (s *service) FindByPhone(phone string) (*entities.User, error) {
+	user, err := s.repo.FindByPhone(phone)
+	return user, err
+}
+
+func (s *service) LoginByPhone(req *entities.User) (*entities.User, error) {
+	user, err := s.repo.FindByPhone(req.Phone)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, nil
+	}
+	// check password
+	if compareErr := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); compareErr != nil {
+		return nil, compareErr
+	}
+	return user, nil
 }

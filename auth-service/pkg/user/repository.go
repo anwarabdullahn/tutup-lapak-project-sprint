@@ -9,6 +9,7 @@ import (
 type Repository interface {
 	Create(user *entities.User) error
 	FindByEmail(email string) (*entities.User, error)
+	FindByPhone(phone string) (*entities.User, error)
 }
 
 type GormRepository struct {
@@ -26,6 +27,14 @@ func (r *GormRepository) Create(user *entities.User) error {
 func (r *GormRepository) FindByEmail(email string) (*entities.User, error) {
 	var user entities.User
 	if err := r.db.Where("email = ?", email).First(&user).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (r *GormRepository) FindByPhone(phone string) (*entities.User, error) {
+	var user entities.User
+	if err := r.db.Where("phone = ?", phone).First(&user).Error; err != nil {
 		return nil, err
 	}
 	return &user, nil

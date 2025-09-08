@@ -14,10 +14,6 @@ func SetupRoutes(app *fiber.App, v *viper.Viper, db *gorm.DB, services Services)
 	// API v1 group
 	api := app.Group("/api/v1")
 
-	app.Get("/healthz", func(c *fiber.Ctx) error {
-		return c.SendString("ok")
-	})
-
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
 			"service": "auth-service",
