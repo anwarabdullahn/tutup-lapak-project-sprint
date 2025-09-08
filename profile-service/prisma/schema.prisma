@@ -13,3 +13,16 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model Profile {
+  id                   String  @id @default(uuid(7))
+  userId               String  @map("user_id")
+  fileId               String  @default("") @map("file_id")
+  fileUri              String  @default("") @map("file_uri")
+  fileThumbnailUri     String  @default("") @map("file_thumbnail_uri")
+  bankAccountName      String  @default("") @map("bank_account_name")
+  bankAccountHolder    String  @default("") @map("bank_account_holder")
+  bankAccountNumber    String  @default("") @map("bank_account_number")
+  
+  @@map("profiles")
+}
