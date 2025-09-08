@@ -16,7 +16,6 @@ type User struct {
     UpdatedAt time.Time `gorm:"column:updated_at;autoUpdateTime"`
 }
 
-func (u *User) TableName() string { return "auth.users" }
 
 // BeforeCreate ensures UUID v7 is set by the application (no DB default)
 func (u *User) BeforeCreate(tx *gorm.DB) (err error) {

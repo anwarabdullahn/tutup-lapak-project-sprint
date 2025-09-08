@@ -1,26 +1,12 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
-import { Module, Controller, Get } from '@nestjs/common';
-
-@Controller()
-class AppController {
-  @Get('healthz')
-  health() {
-    return 'ok';
-  }
-
-  @Get()
-  root() {
-    return { service: 'profile-service', status: 'running' };
-  }
-}
-
-@Module({ controllers: [AppController] })
-class AppModule {}
+import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  
   const port = parseInt(process.env.PORT || '3002', 10);
+  console.log(`Profile service listening on port ${port}`);
   await app.listen(port);
 }
 

@@ -2,16 +2,22 @@ package main
 
 import (
 	"log"
-	"os"
 
+	"auth-service/config"
 	"github.com/gofiber/fiber/v2"
 )
 
-func main() {
-	svc := getEnv("SERVICE_NAME", "auth-service")
-	port := getEnv("PORT", "8080")
+// @title           Auth Service API
+// @version         1.0
+// @description     Authentication service for TutupLapak application.
 
-	app := fiber.New()
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+
+func main() {
+	v := config.NewViper()
+	app := config.NewFiber(v)
 
 	app.Get("/healthz", func(c *fiber.Ctx) error {
 		return c.SendString("ok")
@@ -19,21 +25,16 @@ func main() {
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
-			"service": svc,
+			"service": "auth-service",
 			"status":  "running",
 		})
 	})
 
-	addr := ":" + port
-	log.Printf("%s listening on %s", svc, addr)
-	if err := app.Listen(addr); err != nil {
-		log.Fatalf("server error: %v", err)
+	// Run server
+	port := v.GetString("PORT")
+	if port == "" {
+		port = "3001"
 	}
-}
-
-func getEnv(key, def string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return def
+	log.Printf("auth-service listening on :%s", port)
+	log.Fatal(app.Listen(":" + port))
 }
