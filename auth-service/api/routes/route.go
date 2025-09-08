@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"auth-service/pkg/user"
+	"auth-service/config"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -10,7 +10,7 @@ import (
 )
 
 // SetupRoutes configures all application routes
-func SetupRoutes(app *fiber.App, v *viper.Viper, db *gorm.DB, services Services) {
+func SetupRoutes(app *fiber.App, v *viper.Viper, db *gorm.DB, services config.Services) {
 	// API v1 group
 	api := app.Group("/api/v1")
 
@@ -22,7 +22,7 @@ func SetupRoutes(app *fiber.App, v *viper.Viper, db *gorm.DB, services Services)
 	})
 
 	// Init JWT Manager (24 jam expired)
-	jwtManager := user.NewJWTManager(v.GetString("JWT_SECRET"), 24*time.Hour)
+	jwtManager := config.NewJWTManager(v.GetString("JWT_SECRET"), 24*time.Hour)
 
 	UserRouter(api, services.UserService, jwtManager)
 
@@ -40,7 +40,3 @@ func SetupRoutes(app *fiber.App, v *viper.Viper, db *gorm.DB, services Services)
 	})
 }
 
-// Services struct holds all service dependencies
-type Services struct {
-	UserService user.Service
-}

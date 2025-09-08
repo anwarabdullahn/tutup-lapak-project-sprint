@@ -2,16 +2,17 @@ package user
 
 import (
 	"auth-service/pkg/entities"
+	"context"
+	"fmt"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
 type Service interface {
-	Register(user *entities.User) (*entities.User, error)
-	Login(user *entities.User) (*entities.User, error)
-	FindByEmail(email string) (*entities.User, error)
-	FindByPhone(phone string) (*entities.User, error)
-	LoginByPhone(user *entities.User) (*entities.User, error)
+	Register(ctx context.Context, req entities.CreateUserRequest) (*entities.User, error)
+	Login(ctx context.Context, req entities.LoginRequest) (*entities.User, error)
+	FindByEmail(ctx context.Context, email string) (*entities.User, error)
+	FindByPhone(ctx context.Context, phone string) (*entities.User, error)
 }
 
 type service struct {
@@ -22,52 +23,79 @@ func NewService(repo Repository) Service {
 	return &service{repo: repo}
 }
 
-func (s *service) Register(user *entities.User) (*entities.User, error) {
-	hashed, _ := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+func (s *service) Register(ctx context.Context, req entities.CreateUserRequest) (*entities.User, error) {
+	// Create new user entity from request
+	user := &entities.User{
+		Email: req.Email,
+		Phone: req.Phone,
+	}
+	
+	hashed, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, fmt.Errorf("failed to hash password: %w", err)
+	}
 	user.Password = string(hashed)
 
-	if err := s.repo.Create(user); err != nil {
-		return nil, err
+	if err := s.repo.Create(ctx, user); err != nil {
+		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
+	
+	// Don't return password in response
+	user.Password = ""
 	return user, nil
 }
 
-func (s *service) Login(req *entities.User) (*entities.User, error) {
-	user, err := s.repo.FindByEmail(req.Email)
+func (s *service) Login(ctx context.Context, req entities.LoginRequest) (*entities.User, error) {
+	var user *entities.User
+	var err error
+	
+	// Login with email or phone
+	if req.Email != "" {
+		user, err = s.repo.FindByEmail(ctx, req.Email)
+	} else if req.Phone != "" {
+		user, err = s.repo.FindByPhone(ctx, req.Phone)
+	} else {
+		return nil, fmt.Errorf("email or phone is required")
+	}
+	
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to find user: %w", err)
 	}
 	if user == nil {
-		return nil, nil
+		return nil, fmt.Errorf("user not found")
 	}
-	// cek password
-	if compareErr := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); compareErr != nil {
-		return nil, compareErr
+	
+	// Check password
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+		return nil, fmt.Errorf("invalid credentials")
 	}
+	
+	// Don't return password in response
+	user.Password = ""
 	return user, nil
 }
 
-func (s *service) FindByEmail(email string) (*entities.User, error) {
-	user, err := s.repo.FindByEmail(email)
-	return user, err
-}
-
-func (s *service) FindByPhone(phone string) (*entities.User, error) {
-	user, err := s.repo.FindByPhone(phone)
-	return user, err
-}
-
-func (s *service) LoginByPhone(req *entities.User) (*entities.User, error) {
-	user, err := s.repo.FindByPhone(req.Phone)
+func (s *service) FindByEmail(ctx context.Context, email string) (*entities.User, error) {
+	user, err := s.repo.FindByEmail(ctx, email)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to find user by email: %w", err)
 	}
-	if user == nil {
-		return nil, nil
-	}
-	// check password
-	if compareErr := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); compareErr != nil {
-		return nil, compareErr
+	// Don't return password in response
+	if user != nil {
+		user.Password = ""
 	}
 	return user, nil
 }
+
+func (s *service) FindByPhone(ctx context.Context, phone string) (*entities.User, error) {
+	user, err := s.repo.FindByPhone(ctx, phone)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find user by phone: %w", err)
+	}
+	// Don't return password in response
+	if user != nil {
+		user.Password = ""
+	}
+	return user, nil
+}
+

@@ -1,7 +1,9 @@
 package handlers
 
 import (
-	presenter "auth-service/api/presenters"
+	"auth-service/api/presenter"
+	"auth-service/config"
+	"auth-service/pkg/dtos"
 	"auth-service/pkg/entities"
 	"auth-service/pkg/user"
 	"net/http"
@@ -18,14 +20,14 @@ var validateAuth = validator.New()
 // @Tags         Authentication
 // @Accept       json
 // @Produce      json
-// @Param        user  body      entities.EmailAuthRequest   true  "Email Registration Data"
+// @Param        user  body      dtos.EmailRegisterRequest   true  "Email Registration Data"
 // @Success      200   {object}  map[string]interface{}
 // @Failure      400   {object}  map[string]interface{}
 // @Failure      500   {object}  map[string]interface{}
 // @Router       /api/v1/register/email [post]
 func RegisterEmail(service user.Service) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		var req entities.EmailAuthRequest
+		var req dtos.EmailRegisterRequest
 		if err := c.BodyParser(&req); err != nil {
 			return c.Status(http.StatusBadRequest).
 				JSON(presenter.ErrorResponse("invalid request body"))
@@ -37,24 +39,29 @@ func RegisterEmail(service user.Service) fiber.Handler {
 		}
 
 		// Check if email already registered
-		existingUser, _ := service.FindByEmail(req.Email)
+		existingUser, _ := service.FindByEmail(c.Context(), req.Email)
 		if existingUser != nil {
 			return c.Status(http.StatusConflict).
 				JSON(presenter.ErrorResponse("email already registered"))
 		}
 
-		postData := &entities.User{
+		createReq := entities.CreateUserRequest{
 			Email:    req.Email,
 			Password: req.Password,
 		}
-
-		user, err := service.Register(postData)
+		user, err := service.Register(c.Context(), createReq)
 		if err != nil {
 			return c.Status(http.StatusInternalServerError).
 				JSON(presenter.ErrorResponse(err.Error()))
 		}
 
-		return c.JSON(presenter.UserSuccessResponse(user))
+		return c.JSON(fiber.Map{
+			"success": true,
+			"data": dtos.UserResponse{
+				ID:    user.ID.String(),
+				Email: user.Email,
+			},
+		})
 	}
 }
 
@@ -64,14 +71,14 @@ func RegisterEmail(service user.Service) fiber.Handler {
 // @Tags         Authentication
 // @Accept       json
 // @Produce      json
-// @Param        user  body      entities.PhoneAuthRequest   true  "Phone Registration Data"
+// @Param        user  body      dtos.PhoneRegisterRequest   true  "Phone Registration Data"
 // @Success      200   {object}  map[string]interface{}
 // @Failure      400   {object}  map[string]interface{}
 // @Failure      500   {object}  map[string]interface{}
 // @Router       /api/v1/register/phone [post]
 func RegisterPhone(service user.Service) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		var req entities.PhoneAuthRequest
+		var req dtos.PhoneRegisterRequest
 		if err := c.BodyParser(&req); err != nil {
 			return c.Status(http.StatusBadRequest).
 				JSON(presenter.ErrorResponse("invalid request body"))
@@ -83,24 +90,29 @@ func RegisterPhone(service user.Service) fiber.Handler {
 		}
 
 		// Check if phone already registered
-		existingUser, _ := service.FindByPhone(req.Phone)
+		existingUser, _ := service.FindByPhone(c.Context(), req.Phone)
 		if existingUser != nil {
 			return c.Status(http.StatusConflict).
 				JSON(presenter.ErrorResponse("phone already registered"))
 		}
 
-		postData := &entities.User{
+		createReq := entities.CreateUserRequest{
 			Phone:    req.Phone,
 			Password: req.Password,
 		}
-
-		user, err := service.Register(postData)
+		user, err := service.Register(c.Context(), createReq)
 		if err != nil {
 			return c.Status(http.StatusInternalServerError).
 				JSON(presenter.ErrorResponse(err.Error()))
 		}
 
-		return c.JSON(presenter.UserSuccessResponse(user))
+		return c.JSON(fiber.Map{
+			"success": true,
+			"data": dtos.UserResponse{
+				ID:    user.ID.String(),
+				Phone: user.Phone,
+			},
+		})
 	}
 }
 
@@ -110,14 +122,14 @@ func RegisterPhone(service user.Service) fiber.Handler {
 // @Tags         Authentication
 // @Accept       json
 // @Produce      json
-// @Param        user  body      entities.EmailAuthRequest   true  "Email Login Data"
+// @Param        user  body      dtos.EmailLoginRequest   true  "Email Login Data"
 // @Success      200   {object}  map[string]interface{}
 // @Failure      400   {object}  map[string]interface{}
 // @Failure      401   {object}  map[string]interface{}
 // @Router       /api/v1/login/email [post]
-func LoginEmail(service user.Service, jwtManager *user.JWTManager) fiber.Handler {
+func LoginEmail(service user.Service, jwtManager *config.JWTManager) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		var req entities.EmailAuthRequest
+		var req dtos.EmailLoginRequest
 		if err := c.BodyParser(&req); err != nil {
 			return c.Status(http.StatusBadRequest).
 				JSON(presenter.ErrorResponse("invalid request body"))
@@ -128,12 +140,11 @@ func LoginEmail(service user.Service, jwtManager *user.JWTManager) fiber.Handler
 				JSON(presenter.ErrorResponse(errValidation.Error()))
 		}
 
-		postData := &entities.User{
+		loginReq := entities.LoginRequest{
 			Email:    req.Email,
 			Password: req.Password,
 		}
-
-		user, err := service.Login(postData)
+		user, err := service.Login(c.Context(), loginReq)
 		if err != nil {
 			return c.Status(http.StatusUnauthorized).
 				JSON(presenter.ErrorResponse("invalid email or password"))
@@ -146,10 +157,12 @@ func LoginEmail(service user.Service, jwtManager *user.JWTManager) fiber.Handler
 				JSON(presenter.ErrorResponse("failed to generate token"))
 		}
 
-		return c.JSON(fiber.Map{
-			"email": user.Email,
-			"phone": user.Phone,
-			"token": token,
+		return c.JSON(dtos.LoginResponse{
+			User: dtos.UserResponse{
+				ID:    user.ID.String(),
+				Email: user.Email,
+			},
+			Token: token,
 		})
 	}
 }
@@ -160,14 +173,14 @@ func LoginEmail(service user.Service, jwtManager *user.JWTManager) fiber.Handler
 // @Tags         Authentication
 // @Accept       json
 // @Produce      json
-// @Param        user  body      entities.PhoneAuthRequest   true  "Phone Login Data"
+// @Param        user  body      dtos.PhoneLoginRequest   true  "Phone Login Data"
 // @Success      200   {object}  map[string]interface{}
 // @Failure      400   {object}  map[string]interface{}
 // @Failure      401   {object}  map[string]interface{}
 // @Router       /api/v1/login/phone [post]
-func LoginPhone(service user.Service, jwtManager *user.JWTManager) fiber.Handler {
+func LoginPhone(service user.Service, jwtManager *config.JWTManager) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		var req entities.PhoneAuthRequest
+		var req dtos.PhoneLoginRequest
 		if err := c.BodyParser(&req); err != nil {
 			return c.Status(http.StatusBadRequest).
 				JSON(presenter.ErrorResponse("invalid request body"))
@@ -178,12 +191,11 @@ func LoginPhone(service user.Service, jwtManager *user.JWTManager) fiber.Handler
 				JSON(presenter.ErrorResponse(errValidation.Error()))
 		}
 
-		postData := &entities.User{
+		loginReq := entities.LoginRequest{
 			Phone:    req.Phone,
 			Password: req.Password,
 		}
-
-		user, err := service.LoginByPhone(postData)
+		user, err := service.Login(c.Context(), loginReq)
 		if err != nil {
 			return c.Status(http.StatusUnauthorized).
 				JSON(presenter.ErrorResponse("invalid phone or password"))
@@ -196,10 +208,12 @@ func LoginPhone(service user.Service, jwtManager *user.JWTManager) fiber.Handler
 				JSON(presenter.ErrorResponse("failed to generate token"))
 		}
 
-		return c.JSON(fiber.Map{
-			"email": user.Email,
-			"phone": user.Phone,
-			"token": token,
+		return c.JSON(dtos.LoginResponse{
+			User: dtos.UserResponse{
+				ID:    user.ID.String(),
+				Phone: user.Phone,
+			},
+			Token: token,
 		})
 	}
 }

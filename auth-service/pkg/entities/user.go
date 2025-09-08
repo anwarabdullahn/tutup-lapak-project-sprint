@@ -16,14 +16,18 @@ type User struct {
 	UpdatedAt time.Time `gorm:"column:updated_at;autoUpdateTime"`
 }
 
-type EmailAuthRequest struct {
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required,min=8,max=32"`
+
+// Service layer request types (better practice)
+type CreateUserRequest struct {
+	Email    string
+	Phone    string
+	Password string
 }
 
-type PhoneAuthRequest struct {
-	Phone    string `json:"phone" validate:"required,min=10,max=15"`
-	Password string `json:"password" validate:"required,min=8,max=32"`
+type LoginRequest struct {
+	Email    string
+	Phone    string
+	Password string
 }
 
 // BeforeCreate ensures UUID v7 is set by the application (no DB default)

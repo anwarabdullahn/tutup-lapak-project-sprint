@@ -3,12 +3,13 @@ package routes
 import (
 	"auth-service/api/handlers"
 	"auth-service/api/middleware"
+	"auth-service/config"
 	"auth-service/pkg/user"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-func UserRouter(app fiber.Router, service user.Service, jwtManager *user.JWTManager) {
+func UserRouter(app fiber.Router, service user.Service, jwtManager *config.JWTManager) {
 	// Registration endpoints
 	app.Post("/register/email", handlers.RegisterEmail(service))
 	app.Post("/register/phone", handlers.RegisterPhone(service))

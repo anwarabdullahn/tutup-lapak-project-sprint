@@ -2,14 +2,15 @@ package user
 
 import (
 	"auth-service/pkg/entities"
+	"context"
 
 	"gorm.io/gorm"
 )
 
 type Repository interface {
-	Create(user *entities.User) error
-	FindByEmail(email string) (*entities.User, error)
-	FindByPhone(phone string) (*entities.User, error)
+	Create(ctx context.Context, user *entities.User) error
+	FindByEmail(ctx context.Context, email string) (*entities.User, error)
+	FindByPhone(ctx context.Context, phone string) (*entities.User, error)
 }
 
 type GormRepository struct {
@@ -20,21 +21,21 @@ func NewGormRepository(db *gorm.DB) *GormRepository {
 	return &GormRepository{db: db}
 }
 
-func (r *GormRepository) Create(user *entities.User) error {
-	return r.db.Create(user).Error
+func (r *GormRepository) Create(ctx context.Context, user *entities.User) error {
+	return r.db.WithContext(ctx).Create(user).Error
 }
 
-func (r *GormRepository) FindByEmail(email string) (*entities.User, error) {
+func (r *GormRepository) FindByEmail(ctx context.Context, email string) (*entities.User, error) {
 	var user entities.User
-	if err := r.db.Where("email = ?", email).First(&user).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("email = ?", email).First(&user).Error; err != nil {
 		return nil, err
 	}
 	return &user, nil
 }
 
-func (r *GormRepository) FindByPhone(phone string) (*entities.User, error) {
+func (r *GormRepository) FindByPhone(ctx context.Context, phone string) (*entities.User, error) {
 	var user entities.User
-	if err := r.db.Where("phone = ?", phone).First(&user).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("phone = ?", phone).First(&user).Error; err != nil {
 		return nil, err
 	}
 	return &user, nil

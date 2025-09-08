@@ -2,14 +2,14 @@
 package middleware
 
 import (
-	presenter "auth-service/api/presenters"
-	"auth-service/pkg/user"
+	"auth-service/api/presenter"
+	"auth-service/config"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func JWTProtected(jm *user.JWTManager) fiber.Handler {
+func JWTProtected(jm *config.JWTManager) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		// Get Authorization header: "Bearer <token>"
 		authHeader := c.Get("Authorization")
