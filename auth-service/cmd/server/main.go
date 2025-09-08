@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
+	"auth-service/api/routes"
 	"auth-service/config"
-	"github.com/gofiber/fiber/v2"
 )
 
 // @title           Auth Service API
@@ -18,17 +18,10 @@ import (
 func main() {
 	v := config.NewViper()
 	app := config.NewFiber(v)
+	db := config.NewGorm(v)
 
-	app.Get("/healthz", func(c *fiber.Ctx) error {
-		return c.SendString("ok")
-	})
-
-	app.Get("/", func(c *fiber.Ctx) error {
-		return c.JSON(fiber.Map{
-			"service": "auth-service",
-			"status":  "running",
-		})
-	})
+	services := config.InitServices(db)
+	routes.SetupRoutes(app, v, db, services)
 
 	// Run server
 	port := v.GetString("PORT")
