@@ -1,55 +1,35 @@
 package main
 
 import (
-    "fmt"
-    "log"
-    "os"
+	"log"
 
-    "github.com/gofiber/fiber/v2"
-    "github.com/gofiber/fiber/v2/middleware/logger"
-    "github.com/gofiber/fiber/v2/middleware/proxy"
+	"backend-infra/config"
+
+	"github.com/gofiber/fiber/v2"
 )
 
+// @title           TutupLapak API
+// @version         1.0
+// @description     This is a sample server for a tutup lapak application.
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+
 func main() {
-    port := getEnv("PORT", "3000")
+	v := config.NewViper()
+	app := config.NewFiber(v)
 
-    app := fiber.New()
-    app.Use(logger.New())
+	if err := config.NewSwagger(app); err != nil {
+		log.Printf("Failed to initialize Swagger: %v", err)
+	}
 
-    // Healthcheck
-    app.Get("/healthz", func(c *fiber.Ctx) error { return c.SendString("ok") })
+	app.Get("/healthz", func(c *fiber.Ctx) error { return c.SendString("ok") })
 
-    // Proxy helpers
-    proxyTo := func(base string) fiber.Handler {
-        return func(c *fiber.Ctx) error {
-            // Strip the first path segment (e.g., /auth or /profile)
-            rest := c.Params("*")
-            target := base
-            if rest != "" {
-                target = fmt.Sprintf("%s/%s", base, rest)
-            }
-            return proxy.Do(c, target)
-        }
-    }
-
-    // Routes
-    app.All("/auth", proxyTo("http://auth-service:3001"))
-    app.All("/auth/*", proxyTo("http://auth-service:3001"))
-
-    app.All("/profile", proxyTo("http://profile-service:3002"))
-    app.All("/profile/*", proxyTo("http://profile-service:3002"))
-
-    addr := ":" + port
-    log.Printf("gateway listening on %s", addr)
-    if err := app.Listen(addr); err != nil {
-        log.Fatalf("server error: %v", err)
-    }
+	// Run server
+	port := v.GetString("SERVER_PORT")
+	if port == "" {
+		port = "3000"
+	}
+	log.Fatal(app.Listen(":" + port))
 }
-
-func getEnv(key, def string) string {
-    if v := os.Getenv(key); v != "" {
-        return v
-    }
-    return def
-}
-
