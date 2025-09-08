@@ -1,0 +1,27 @@
+{
+  "name": "Go Microservices Dev",
+  "dockerComposeFile": ["../docker-compose.yml"],
+  "service": "dev",
+  "workspaceFolder": "/workspaces",
+  "shutdownAction": "stopCompose",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "golang.go",
+        "ms-azuretools.vscode-docker",
+        "mhutchie.git-graph"
+      ],
+      "settings": {
+        "go.toolsManagement.autoUpdate": true,
+        "go.useLanguageServer": true,
+        "editor.formatOnSave": true
+      }
+    }
+  },
+  "postCreateCommand": "go version || true",
+  "remoteEnv": {
+    "GOMODCACHE": "/go/pkg/mod",
+    "GOPATH": "/go"
+  }
+}
+

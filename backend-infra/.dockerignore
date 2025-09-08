@@ -1,0 +1,12 @@
+.git
+.vscode
+.idea
+bin
+dist
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+.DS_Store
+
