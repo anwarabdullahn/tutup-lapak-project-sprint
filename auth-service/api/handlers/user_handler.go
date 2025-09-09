@@ -217,3 +217,43 @@ func LoginPhone(service user.Service, jwtManager *config.JWTManager) fiber.Handl
 		})
 	}
 }
+
+// GetMe returns the current user's profile information
+// @Summary      Get current user profile
+// @Description  Get authenticated user's profile from gateway context
+// @Tags         Protected
+// @Accept       json
+// @Produce      json
+// @Success      200   {object}  map[string]interface{}
+// @Failure      401   {object}  map[string]interface{}
+// @Failure      404   {object}  map[string]interface{}
+// @Router       /api/v1/protected/me [get]
+func GetMe(service user.Service) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		// Get user ID from gateway context (X-User-ID header)
+		userIDStr, ok := c.Locals("user_id").(string)
+		if !ok {
+			return c.Status(http.StatusUnauthorized).
+				JSON(presenter.ErrorResponse("user context not found"))
+		}
+
+		existingUser, _ := service.FindById(c.Context(), userIDStr)
+		if existingUser == nil {
+			return c.Status(http.StatusNotFound).
+				JSON(presenter.ErrorResponse("user not found"))
+		}
+
+		// user, err := service.FindById(c, userIDStr)
+
+		// Since we trust the gateway, we can return basic user info
+		// In a real implementation, you might want to add FindByID to the service
+		return c.JSON(fiber.Map{
+			"success": true,
+			"message": "User profile retrieved successfully",
+			"data": fiber.Map{
+				"user":              existingUser,
+				"gateway_validated": c.Locals("gateway_validated"),
+			},
+		})
+	}
+}
