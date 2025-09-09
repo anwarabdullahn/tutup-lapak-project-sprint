@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"backend-infra/config"
+	"backend-infra/routes"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -25,6 +26,9 @@ func main() {
 	}
 
 	app.Get("/healthz", func(c *fiber.Ctx) error { return c.SendString("ok") })
+
+	// Setup routes
+	routes.SetupAuthRoutes(app)
 
 	// Run server
 	port := v.GetString("SERVER_PORT")
