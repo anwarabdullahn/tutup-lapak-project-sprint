@@ -98,6 +98,15 @@ func proxyToAuthService(c *fiber.Ctx, endpoint string) error {
 		}
 	}
 
+	// Add user context headers if available (for protected routes)
+	if userID := c.Locals("user_id"); userID != nil {
+		req.Header.Set("X-User-ID", userID.(string))
+		req.Header.Set("X-Auth-Gateway", "backend-infra")
+
+		// Add internal secret for secure communication
+		req.Header.Set("X-Secret", "backend-infra-internal-secret") // TODO: Make configurable
+	}
+
 	// Make request to auth service
 	client := &http.Client{}
 	resp, err := client.Do(req)

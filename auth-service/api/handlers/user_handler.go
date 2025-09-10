@@ -243,8 +243,6 @@ func GetMe(service user.Service) fiber.Handler {
 				JSON(presenter.ErrorResponse("user not found"))
 		}
 
-		// user, err := service.FindById(c, userIDStr)
-
 		// Since we trust the gateway, we can return basic user info
 		// In a real implementation, you might want to add FindByID to the service
 		return c.JSON(fiber.Map{
