@@ -21,7 +21,12 @@ import (
 func main() {
 	v := config.NewViper()
 	app := config.NewFiber(v)
-
+	urls := config.LoadServiceURLs(v)
+	// Middleware to inject urls into ctx.Locals
+	app.Use(func(c *fiber.Ctx) error {
+		c.Locals("service_urls", urls)
+		return c.Next()
+	})
 	if err := config.NewSwagger(app); err != nil {
 		log.Printf("Failed to initialize Swagger: %v", err)
 	}

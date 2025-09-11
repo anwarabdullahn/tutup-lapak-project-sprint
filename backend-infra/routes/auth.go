@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"backend-infra/config"
 	"bytes"
 	"encoding/json"
 	"io"
@@ -8,8 +9,6 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 )
-
-const AUTH_SERVICE_URL = "http://localhost:3001"
 
 // SetupAuthRoutes sets up auth-related routes
 func SetupAuthRoutes(app *fiber.App) {
@@ -82,7 +81,8 @@ func proxyToAuthService(c *fiber.Ctx, method string, endpoint string) error {
 	body := c.Body()
 
 	// Create request to auth service
-	url := AUTH_SERVICE_URL + endpoint
+	auth_service_url := c.Locals("service_urls").(*config.ServiceURLs).AuthServiceURL
+	url := auth_service_url + endpoint
 	req, err := http.NewRequest(method, url, bytes.NewReader(body))
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{

@@ -24,7 +24,7 @@ func main() {
 	routes.SetupRoutes(app, v, db, services)
 
 	// Run server
-	port := v.GetString("PORT")
+	port := v.GetString("SERVER_PORT")
 	if port == "" {
 		port = "3001"
 	}
