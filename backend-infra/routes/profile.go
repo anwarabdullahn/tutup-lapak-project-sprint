@@ -28,5 +28,5 @@ func SetupProfileRoutes(app *fiber.App, jwtManager *config.JWTManager) {
 // @Router /v1/profile/me [get]
 func getUserProfile(c *fiber.Ctx) error {
 	log.Println("Fetching user profile")
-	return proxyToAuthService(c, "/api/v1/protected/me")
+	return proxyToAuthService(c, "GET", "/api/v1/protected/me")
 }

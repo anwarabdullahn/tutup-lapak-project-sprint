@@ -34,7 +34,7 @@ func SetupAuthRoutes(app *fiber.App) {
 // @Failure 400 {object} map[string]interface{}
 // @Router /v1/login/email [post]
 func loginWithEmail(c *fiber.Ctx) error {
-	return proxyToAuthService(c, "/api/v1/login/email")
+	return proxyToAuthService(c, "POST", "/api/v1/login/email")
 }
 
 // @Summary Login with phone
@@ -47,7 +47,7 @@ func loginWithEmail(c *fiber.Ctx) error {
 // @Failure 400 {object} map[string]interface{}
 // @Router /v1/login/phone [post]
 func loginWithPhone(c *fiber.Ctx) error {
-	return proxyToAuthService(c, "/api/v1/login/phone")
+	return proxyToAuthService(c, "POST", "/api/v1/login/phone")
 }
 
 // @Summary Register with email
@@ -60,7 +60,7 @@ func loginWithPhone(c *fiber.Ctx) error {
 // @Failure 400 {object} map[string]interface{}
 // @Router /v1/register/email [post]
 func registerWithEmail(c *fiber.Ctx) error {
-	return proxyToAuthService(c, "/api/v1/register/email")
+	return proxyToAuthService(c, "POST", "/api/v1/register/email")
 }
 
 // @Summary Register with phone
@@ -73,17 +73,17 @@ func registerWithEmail(c *fiber.Ctx) error {
 // @Failure 400 {object} map[string]interface{}
 // @Router /v1/register/phone [post]
 func registerWithPhone(c *fiber.Ctx) error {
-	return proxyToAuthService(c, "/api/v1/register/phone")
+	return proxyToAuthService(c, "POST", "/api/v1/register/phone")
 }
 
 // proxyToAuthService forwards requests to the auth service
-func proxyToAuthService(c *fiber.Ctx, endpoint string) error {
+func proxyToAuthService(c *fiber.Ctx, method string, endpoint string) error {
 	// Get request body
 	body := c.Body()
 
 	// Create request to auth service
 	url := AUTH_SERVICE_URL + endpoint
-	req, err := http.NewRequest("POST", url, bytes.NewReader(body))
+	req, err := http.NewRequest(method, url, bytes.NewReader(body))
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to create request",
