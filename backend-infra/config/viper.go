@@ -1,6 +1,8 @@
 package config
 
 import (
+	"fmt"
+
 	"github.com/spf13/viper"
 )
 
@@ -13,10 +15,11 @@ func NewViper() *viper.Viper {
 	config.SetConfigName(".env")
 	config.SetConfigType("env")
 	config.AddConfigPath(".")
-
 	// Read config file
 	if err := config.ReadInConfig(); err != nil {
-		// If .env file is not found, just use environment variables
+		fmt.Println("Warning: .env file not found or unreadable, using environment variables only:", err)
+	} else {
+		fmt.Println("Config file loaded from .env")
 	}
 
 	// Set config to read from environment variables (will override .env)
