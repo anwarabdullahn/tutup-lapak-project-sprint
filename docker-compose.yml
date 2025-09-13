@@ -1,0 +1,64 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: infra_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+      start_period: 10s  # ← Give Postgres time to initialize on first run
+
+  redis:
+    image: redis:7-alpine
+    container_name: infra_redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+
+  backend_infra:
+    build:
+      context: ./backend-infra
+      dockerfile: Dockerfile
+    container_name: backend_infra
+    environment:
+      DATABASE_URL: "postgres://postgres:postgres@postgres:5432/postgres?sslmode=disable"
+      SERVER_PORT: 3000
+      JWT_SECRET: "nv6FNtvAmBmUMHRSta8aSZNwiw4XAH"
+      AUTH_SERVICE_URL: "http://auth_service:3001"
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy  # ← Wait until Postgres is READY
+      redis: 
+        condition: service_started        
+
+  auth_service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    container_name: auth_service
+    environment:
+      DATABASE_URL: "postgres://postgres:postgres@postgres:5432/postgres?sslmode=disable"
+      SERVER_PORT: 3001
+      JWT_SECRET: "nv6FNtvAmBmUMHRSta8aSZNwiw4XAH"
+    ports:
+      - "3001:3001"
+    depends_on:
+      - backend_infra
+
+volumes:
+  pgdata:
+  redisdata:
+

@@ -24,7 +24,7 @@ func SetupRoutes(app *fiber.App, v *viper.Viper, db *gorm.DB, services config.Se
 	// Init JWT Manager (24 jam expired)
 	jwtManager := config.NewJWTManager(v.GetString("JWT_SECRET"), 24*time.Hour)
 
-	UserRouter(api, services.UserService, jwtManager)
+	UserRouter(api, services.UserService, jwtManager, v)
 
 	app.Get("/healthz", func(c *fiber.Ctx) error {
 		sqlDB, err := db.DB() // get underlying *sql.DB from GORM

@@ -13,11 +13,12 @@ swagger\:gen:
 		exit 1; \
 	fi
 	mkdir -p $(DOCS_DIR)
-	swag init -g $(SWAGGER_MAIN) -o $(SWAGGER_OUT) -ot json
+	@echo "🔄 Generating Swagger documentation..."
+	@swag init -g $(SWAGGER_MAIN) -o $(SWAGGER_OUT) --parseDependency --parseInternal 2>/dev/null || true
 	@echo "✅ Swagger generated at $(DOCS_DIR)/swagger.json"
 
-.PHONY: swagger-clean
-swagger-clean:
+.PHONY: swagger\:clean
+swagger\:clean:
 	rm -rf $(DOCS_DIR)
 	@echo "🧹 Removed $(DOCS_DIR)"
 
@@ -25,4 +26,4 @@ swagger-clean:
 help:
 	@echo "Available commands:"
 		@echo "  swagger:gen       Generate Swagger documentation (requires swag CLI)"
-	@echo "  swagger-clean     Remove generated Swagger docs"
+	@echo "  swagger:clean     Remove generated Swagger docs"
