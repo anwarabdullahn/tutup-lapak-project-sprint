@@ -1,0 +1,14 @@
+services:
+  fiber:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: go-tutup-lapak
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    networks:
+      - appnet
+
+networks:
+  appnet:

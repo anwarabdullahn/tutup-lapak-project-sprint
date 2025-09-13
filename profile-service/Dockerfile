@@ -1,23 +1,15 @@
-# Install deps (including dev) and build, then prune dev deps
-FROM node:20-alpine AS deps
-WORKDIR /app
-COPY package.json ./
-RUN npm install
+# Build stage
+FROM golang:1.22-alpine AS builder
+WORKDIR /src
+COPY go.mod ./
+RUN --mount=type=cache,target=/go/pkg/mod go mod download || true
+COPY . .
+RUN --mount=type=cache,target=/go/pkg/mod \
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /out/server ./cmd/server
 
-FROM node:20-alpine AS build
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY tsconfig.json ./
-COPY src ./src
-RUN npm run build && npm prune --omit=dev
-
-FROM node:20-alpine
-WORKDIR /app
-ENV NODE_ENV=production
-ENV PORT=3002
-COPY --from=build /app/node_modules ./node_modules
-COPY package.json ./
-COPY --from=build /app/dist ./dist
-EXPOSE 3002
-CMD ["node", "dist/main.js"]
-
+# Runtime stage
+FROM alpine:3.20
+WORKDIR /
+COPY --from=builder /out/server /server
+EXPOSE 3001
+ENTRYPOINT ["/server"]
