@@ -5,7 +5,8 @@ import (
 )
 
 type ServiceURLs struct {
-	AuthServiceURL string
+	AuthServiceURL     string
+	PurchaseServiceURL string
 	// Add more as needed
 }
 
@@ -15,7 +16,13 @@ func LoadServiceURLs(config *viper.Viper) *ServiceURLs {
 		AuthServiceURL = "http://localhost:3001"
 	}
 
+	PurchaseServiceURL := config.GetString("PURCHASE_SERVICE_URL")
+	if PurchaseServiceURL == "" {
+		PurchaseServiceURL = "http://localhost:3004"
+	}
+
 	return &ServiceURLs{
-		AuthServiceURL: AuthServiceURL,
+		AuthServiceURL:     AuthServiceURL,
+		PurchaseServiceURL: PurchaseServiceURL,
 	}
 }

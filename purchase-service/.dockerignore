@@ -1,0 +1,26 @@
+# Git & VCS
+.git
+
+# Node, logs, caches
+node_modules
+npm-debug.log*
+yarn-error.log*
+.DS_Store
+
+# Go build artifacts
+bin
+dist
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+
+# IDE
+.idea
+.vscode
+
+# Devcontainer and infra
+.devcontainer
+infra
+
