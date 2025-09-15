@@ -23,6 +23,13 @@ definitions:
     - email
     - password
     type: object
+  dtos.EmailRequest:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
   dtos.LoginResponse:
     properties:
       token:
@@ -58,6 +65,37 @@ definitions:
     - password
     - phone
     type: object
+  dtos.PhoneRequest:
+    properties:
+      phone:
+        maxLength: 15
+        minLength: 10
+        type: string
+    required:
+    - phone
+    type: object
+  dtos.UpdateUserRequest:
+    properties:
+      bankAccountHolder:
+        maxLength: 32
+        minLength: 4
+        type: string
+      bankAccountName:
+        maxLength: 32
+        minLength: 4
+        type: string
+      bankAccountNumber:
+        maxLength: 32
+        minLength: 4
+        type: string
+      fileId:
+        type: string
+    required:
+    - bankAccountHolder
+    - bankAccountName
+    - bankAccountNumber
+    - fileId
+    type: object
   dtos.UserResponse:
     properties:
       email:
@@ -73,6 +111,40 @@ info:
   title: TutupLapak API
   version: "1.0"
 paths:
+  /v1/file:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload user file
+      parameters:
+      - description: User File
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Upload user file
+      tags:
+      - Upload File
   /v1/login/email:
     post:
       consumes:
@@ -127,29 +199,6 @@ paths:
       summary: Login with phone
       tags:
       - auth
-  /v1/profile/me:
-    get:
-      consumes:
-      - application/json
-      description: Get authenticated user's profile information
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties: true
-            type: object
-        "401":
-          description: Unauthorized
-          schema:
-            additionalProperties: true
-            type: object
-      security:
-      - BearerAuth: []
-      summary: Get current user profile
-      tags:
-      - protected
   /v1/register/email:
     post:
       consumes:
@@ -204,6 +253,134 @@ paths:
       summary: Register with phone
       tags:
       - auth
+  /v1/user:
+    get:
+      consumes:
+      - application/json
+      description: Get authenticated user's profile information
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get current user profile
+      tags:
+      - Profile
+      - protected
+    put:
+      consumes:
+      - application/json
+      description: Update an existing profile (partial updates allowed)
+      parameters:
+      - description: User update request (partial fields allowed)
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update a profile
+      tags:
+      - Profile
+  /v1/user/link/email:
+    post:
+      consumes:
+      - application/json
+      description: Update an existing email (partial updates allowed)
+      parameters:
+      - description: User update request (partial fields allowed)
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.EmailRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update a email
+      tags:
+      - Profile
+  /v1/user/link/phone:
+    post:
+      consumes:
+      - application/json
+      description: Update an existing phoe (partial updates allowed)
+      parameters:
+      - description: User update request (partial fields allowed)
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.PhoneRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update a phone
+      tags:
+      - Profile
 securityDefinitions:
   BearerAuth:
     in: header

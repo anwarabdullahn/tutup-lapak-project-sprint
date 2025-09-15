@@ -44,6 +44,7 @@ func main() {
 	// Setup routes
 	routes.SetupAuthRoutes(app)
 	routes.SetupProfileRoutes(app, jwtManager)
+	routes.SetupFileRoutes(app, jwtManager)
 
 	// Run server
 	port := v.GetString("SERVER_PORT")

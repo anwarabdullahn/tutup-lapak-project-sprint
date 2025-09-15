@@ -26,11 +26,7 @@ var validateUser = validator.New()
 // @Router       /api/v1/user [get]
 func GetMe(service user.Service) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		userIDStr, ok := c.Locals("user_id").(string)
-		if !ok {
-			return c.Status(fiber.StatusUnauthorized).
-				JSON(presenter.ErrorResponse("invalid token user_id"))
-		}
+		userIDStr := c.Get("X-User-ID")
 
 		data, err := service.GetByID(userIDStr)
 		if err != nil {
@@ -58,21 +54,16 @@ func GetMe(service user.Service) fiber.Handler {
 func UpdateProfile(service user.Service) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var requestBody entities.UpdateUserRequest
-
-		// 1. Ambil user_id dari token
-		userIDStr, ok := c.Locals("user_id").(string)
-		if !ok {
-			return c.Status(http.StatusUnauthorized).
-				JSON(presenter.ErrorResponse("invalid token user_id"))
+		userIDStr := c.Get("X-User-ID")
+		if userIDStr == "" {
+			return c.Status(http.StatusBadRequest).
+				JSON(presenter.ErrorResponse("invalid user id"))
 		}
-
-		// 2. Parse request body
 		if err := c.BodyParser(&requestBody); err != nil {
 			return c.Status(http.StatusBadRequest).
 				JSON(presenter.ErrorResponse("invalid request body: " + err.Error()))
 		}
 
-		// 3. Call service
 		user, err := service.UpdateProfile(userIDStr, requestBody)
 		if err != nil {
 			// Mapping error → HTTP response
@@ -114,20 +105,16 @@ func UpdateEmail(service user.Service) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var requestBody entities.EmailRequest
 
-		// 1. Ambil user_id dari token
-		userIDStr, ok := c.Locals("user_id").(string)
-		if !ok {
-			return c.Status(http.StatusUnauthorized).
-				JSON(presenter.ErrorResponse("invalid token user_id"))
+		userIDStr := c.Get("X-User-ID")
+		if userIDStr == "" {
+			return c.Status(http.StatusBadRequest).
+				JSON(presenter.ErrorResponse("invalid user id"))
 		}
-
-		// 2. Parse request body
 		if err := c.BodyParser(&requestBody); err != nil {
 			return c.Status(http.StatusBadRequest).
 				JSON(presenter.ErrorResponse("invalid request body: " + err.Error()))
 		}
 
-		// 3. Validasi request
 		if errVal := validateUser.Struct(requestBody); errVal != nil {
 			return c.Status(http.StatusBadRequest).
 				JSON(presenter.ErrorResponse(errVal.Error()))
@@ -139,7 +126,7 @@ func UpdateEmail(service user.Service) fiber.Handler {
 			return c.Status(http.StatusInternalServerError).
 				JSON(presenter.ErrorResponse(err.Error()))
 		}
-		// return c.JSON(user)
+
 		return c.JSON(presenter.ProfileSuccessResponse(user))
 
 	}
@@ -161,13 +148,11 @@ func UpdatePhone(service user.Service) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var requestBody entities.PhoneRequest
 
-		// 1. Ambil user_id dari token
-		userIDStr, ok := c.Locals("user_id").(string)
-		if !ok {
-			return c.Status(http.StatusUnauthorized).
-				JSON(presenter.ErrorResponse("invalid token user_id"))
+		userIDStr := c.Get("X-User-ID")
+		if userIDStr == "" {
+			return c.Status(http.StatusBadRequest).
+				JSON(presenter.ErrorResponse("invalid user id"))
 		}
-
 		// 2. Parse request body
 		if err := c.BodyParser(&requestBody); err != nil {
 			return c.Status(http.StatusBadRequest).
@@ -193,7 +178,6 @@ func UpdatePhone(service user.Service) fiber.Handler {
 		}
 
 		return c.JSON(presenter.ProfileSuccessResponse(user))
-		// return c.JSON(presenter.ProfileSuccessResponse(user))
 
 	}
 }
