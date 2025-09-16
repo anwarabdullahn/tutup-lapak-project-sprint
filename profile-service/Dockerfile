@@ -1,23 +1,26 @@
-# Install deps (including dev) and build, then prune dev deps
-FROM node:20-alpine AS deps
-WORKDIR /app
-COPY package.json ./
-RUN npm install
+FROM golang:1.25.0-alpine AS builder
 
-FROM node:20-alpine AS build
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY tsconfig.json ./
-COPY src ./src
-RUN npm run build && npm prune --omit=dev
+ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64
 
-FROM node:20-alpine
 WORKDIR /app
-ENV NODE_ENV=production
-ENV PORT=3002
-COPY --from=build /app/node_modules ./node_modules
-COPY package.json ./
-COPY --from=build /app/dist ./dist
+COPY go.mod go.sum ./
+RUN --mount=type=cache,target=/go/pkg/mod go mod download
+
+COPY . .
+RUN --mount=type=cache,target=/go/pkg/mod \
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o /out/server ./cmd/server
+
+# Stage 2: Run
+FROM alpine:latest
+
+WORKDIR /app
+COPY --from=builder /out/server /server
+COPY ./docs ./docs
+
+RUN apk add --no-cache ca-certificates
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+USER appuser
+
 EXPOSE 3002
-CMD ["node", "dist/main.js"]
-
+CMD ["/server"]

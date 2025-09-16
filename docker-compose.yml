@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -36,6 +36,7 @@ services:
       SERVER_PORT: 3000
       JWT_SECRET: "nv6FNtvAmBmUMHRSta8aSZNwiw4XAH"
       AUTH_SERVICE_URL: "http://auth_service:3001"
+      PROFILE_SERVICE_URL: "http://profile_service:3002"
     ports:
       - "3000:3000"
     depends_on:
@@ -58,6 +59,34 @@ services:
     depends_on:
       - backend_infra
 
+  profile_service:
+    build:
+      context: ./profile-service
+      dockerfile: Dockerfile
+    container_name: profile_service
+    environment:
+      DATABASE_URL: "postgres://postgres:postgres@postgres:5432/postgres?sslmode=disable"
+      SERVER_PORT: 3002
+      JWT_SECRET: "nv6FNtvAmBmUMHRSta8aSZNwiw4XAH"
+    ports:
+      - "3002:3002"
+    depends_on:
+      - backend_infra 
+
+  dev:
+    image: golang:1.23
+    container_name: dev
+    volumes:
+      - .:/workspaces
+    working_dir: /workspaces
+    command: sleep infinity
+    depends_on:
+      - postgres
+      - redis
+      - backend_infra
+      - auth_service
+      - profile_service
+      
 volumes:
   pgdata:
   redisdata:

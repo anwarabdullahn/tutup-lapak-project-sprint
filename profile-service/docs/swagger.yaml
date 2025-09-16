@@ -1,0 +1,290 @@
+definitions:
+  entities.AuthRequest:
+    properties:
+      email:
+        type: string
+      password:
+        maxLength: 32
+        minLength: 8
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  entities.EmailRequest:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  entities.PhoneRequest:
+    properties:
+      phone:
+        maxLength: 15
+        minLength: 10
+        type: string
+    required:
+    - phone
+    type: object
+  entities.UpdateUserRequest:
+    properties:
+      bankAccountHolder:
+        maxLength: 32
+        minLength: 4
+        type: string
+      bankAccountName:
+        maxLength: 32
+        minLength: 4
+        type: string
+      bankAccountNumber:
+        maxLength: 32
+        minLength: 4
+        type: string
+      fileId:
+        type: string
+    required:
+    - bankAccountHolder
+    - bankAccountName
+    - bankAccountNumber
+    - fileId
+    type: object
+info:
+  contact: {}
+  description: This is my API with JWT auth
+  title: My API
+  version: "1.0"
+paths:
+  /api/v1/login:
+    post:
+      consumes:
+      - application/json
+      description: Login
+      parameters:
+      - description: 'User '
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/entities.AuthRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Login
+      tags:
+      - Autentifikasi
+  /api/v1/register:
+    post:
+      consumes:
+      - application/json
+      description: Create new user
+      parameters:
+      - description: 'User '
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/entities.AuthRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Create new user
+      tags:
+      - Autentifikasi
+  /api/v1/upload-file:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload user file
+      parameters:
+      - description: User File
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Upload user file
+      tags:
+      - Upload File
+  /api/v1/user:
+    get:
+      consumes:
+      - application/json
+      description: Get user profile from JWT token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get current user
+      tags:
+      - Profile
+    put:
+      consumes:
+      - application/json
+      description: Update an existing profile (partial updates allowed)
+      parameters:
+      - description: User update request (partial fields allowed)
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/entities.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update a profile
+      tags:
+      - Profile
+  /api/v1/user/link/email:
+    post:
+      consumes:
+      - application/json
+      description: Update an existing email (partial updates allowed)
+      parameters:
+      - description: User update request (partial fields allowed)
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/entities.EmailRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update a email
+      tags:
+      - Profile
+  /api/v1/user/link/phone:
+    post:
+      consumes:
+      - application/json
+      description: Update an existing phoe (partial updates allowed)
+      parameters:
+      - description: User update request (partial fields allowed)
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/entities.PhoneRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update a phone
+      tags:
+      - Profile
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

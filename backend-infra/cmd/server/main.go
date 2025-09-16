@@ -44,6 +44,7 @@ func main() {
 	// Setup routes
 	routes.SetupAuthRoutes(app)
 	routes.SetupProfileRoutes(app, jwtManager)
+	routes.SetupFileRoutes(app, jwtManager)
 	routes.SetupPurchaseRoutes(app, jwtManager)
 
 	// Run server
