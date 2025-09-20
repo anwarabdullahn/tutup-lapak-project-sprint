@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: auth-migrate-
+  namespace: tutup-lapak
+  generateName: auth-migrate-
+  labels:
+    app: auth-service
+    job-type: migration
+spec:
+  backoffLimit: 2
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrate
+          image: your-registry/auth-service:latest
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh","-c"]
+          args:
+            - |
+              if ! command -v migrate >/dev/null 2>&1; then echo "migrate CLI not baked into image"; exit 1; fi
+              migrate -path migrations/db -database "$DATABASE_URL" up
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: DATABASE_URL

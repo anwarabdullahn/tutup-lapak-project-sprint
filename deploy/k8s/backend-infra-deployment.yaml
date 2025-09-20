@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-infra
+  namespace: tutup-lapak
+  labels:
+    app: backend-infra
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend-infra
+  template:
+    metadata:
+      labels:
+        app: backend-infra
+    spec:
+      containers:
+        - name: gateway
+          image: your-registry/backend-infra:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          env:
+            - name: SERVER_PORT
+              value: "3000"
+            - name: AUTH_SERVICE_URL
+              value: "http://auth-service.tutup-lapak.svc.cluster.local:3001"
+            - name: PRODUCT_SERVICE_URL
+              value: "http://product-service.tutup-lapak.svc.cluster.local:3003"
+            - name: PURCHASE_SERVICE_URL
+              value: "http://purchase-service.tutup-lapak.svc.cluster.local:3004"
+            - name: PROFILE_SERVICE_URL
+              value: "http://profile-service.tutup-lapak.svc.cluster.local:3002"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: JWT_SECRET
+            - name: INTERNAL_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: INTERNAL_SECRET
+          readinessProbe:
+            httpGet:
+              path: /swagger
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /swagger
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-infra
+  namespace: tutup-lapak
+spec:
+  selector:
+    app: backend-infra
+  ports:
+    - port: 3000
+      targetPort: 3000
+  type: ClusterIP
