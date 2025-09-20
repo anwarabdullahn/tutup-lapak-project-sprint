@@ -1,4 +1,39 @@
 definitions:
+  dtos.CreateProductRequest:
+    properties:
+      category:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      price_cents:
+        type: integer
+    type: object
+  dtos.CreatePurchaseRequest:
+    properties:
+      purchasedItems:
+        items:
+          $ref: '#/definitions/dtos.PurchaseItemRequest'
+        minItems: 1
+        type: array
+      senderContactDetail:
+        type: string
+      senderContactType:
+        enum:
+        - email
+        - phone
+        type: string
+      senderName:
+        maxLength: 55
+        minLength: 4
+        type: string
+    required:
+    - purchasedItems
+    - senderContactDetail
+    - senderContactType
+    - senderName
+    type: object
   dtos.EmailLoginRequest:
     properties:
       email:
@@ -30,12 +65,73 @@ definitions:
     required:
     - email
     type: object
+  dtos.GetPurchaseResponse:
+    properties:
+      createdAt:
+        type: string
+      paymentDetails:
+        items:
+          $ref: '#/definitions/dtos.PaymentDetail'
+        type: array
+      paymentProofIds:
+        items:
+          type: string
+        type: array
+      purchaseId:
+        type: string
+      purchasedItems:
+        items:
+          $ref: '#/definitions/dtos.PurchaseItemResponse'
+        type: array
+      senderInfo:
+        $ref: '#/definitions/dtos.SenderInfo'
+      totalPrice:
+        type: number
+      updatedAt:
+        type: string
+      userId:
+        type: string
+    type: object
+  dtos.ListPurchasesResponse:
+    properties:
+      limit:
+        type: integer
+      page:
+        type: integer
+      purchases:
+        items:
+          $ref: '#/definitions/dtos.GetPurchaseResponse'
+        type: array
+      total:
+        type: integer
+    type: object
   dtos.LoginResponse:
     properties:
       token:
         type: string
       user:
         $ref: '#/definitions/dtos.UserResponse'
+    type: object
+  dtos.PaymentDetail:
+    properties:
+      bankAccountHolder:
+        type: string
+      bankAccountName:
+        type: string
+      bankAccountNumber:
+        type: string
+      totalPrice:
+        type: number
+    type: object
+  dtos.PaymentProofRequest:
+    properties:
+      fileIds:
+        items:
+          type: string
+        minItems: 1
+        type: array
+    required:
+    - fileIds
     type: object
   dtos.PhoneLoginRequest:
     properties:
@@ -73,6 +169,94 @@ definitions:
         type: string
     required:
     - phone
+    type: object
+  dtos.Product:
+    properties:
+      category:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      price_cents:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  dtos.PurchaseItemRequest:
+    properties:
+      productId:
+        type: string
+      qty:
+        minimum: 1
+        type: integer
+    required:
+    - productId
+    - qty
+    type: object
+  dtos.PurchaseItemResponse:
+    properties:
+      category:
+        type: string
+      createdAt:
+        type: string
+      fileId:
+        type: string
+      fileThumbnailUri:
+        type: string
+      fileUri:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+      productId:
+        type: string
+      qty:
+        type: integer
+      sku:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  dtos.PurchaseResponse:
+    properties:
+      paymentDetails:
+        items:
+          $ref: '#/definitions/dtos.PaymentDetail'
+        type: array
+      purchaseId:
+        type: string
+      purchasedItems:
+        items:
+          $ref: '#/definitions/dtos.PurchaseItemResponse'
+        type: array
+      totalPrice:
+        type: number
+    type: object
+  dtos.SenderInfo:
+    properties:
+      senderContactDetail:
+        type: string
+      senderContactType:
+        type: string
+      senderName:
+        type: string
+    type: object
+  dtos.UpdateProductRequest:
+    properties:
+      category:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      price_cents:
+        type: integer
     type: object
   dtos.UpdateUserRequest:
     properties:
@@ -199,6 +383,275 @@ paths:
       summary: Login with phone
       tags:
       - auth
+  /v1/products/:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dtos.Product'
+            type: array
+      summary: List products
+      tags:
+      - products
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Product data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.CreateProductRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dtos.Product'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Create product
+      tags:
+      - products
+  /v1/products/{id}:
+    delete:
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Delete product
+      tags:
+      - products
+    get:
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dtos.Product'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get product
+      tags:
+      - products
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Product data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.UpdateProductRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dtos.Product'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Update product
+      tags:
+      - products
+  /v1/purchase:
+    get:
+      consumes:
+      - application/json
+      description: Get a paginated list of user's purchases
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dtos.ListPurchasesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List user's purchases
+      tags:
+      - purchase
+    post:
+      consumes:
+      - application/json
+      description: Customer can add their items to cart so they can pay them
+      parameters:
+      - description: Purchase request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.CreatePurchaseRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dtos.PurchaseResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new purchase
+      tags:
+      - purchase
+  /v1/purchase/{purchaseId}:
+    get:
+      consumes:
+      - application/json
+      description: Get a specific purchase by its ID
+      parameters:
+      - description: Purchase ID
+        in: path
+        name: purchaseId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dtos.GetPurchaseResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get purchase by ID
+      tags:
+      - purchase
+    post:
+      consumes:
+      - application/json
+      description: Customer can upload their payment proof photo here. After payment,
+        decreases the real product quantity.
+      parameters:
+      - description: Purchase ID
+        in: path
+        name: purchaseId
+        required: true
+        type: string
+      - description: Payment proof request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.PaymentProofRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Upload payment proof for a purchase
+      tags:
+      - purchase
   /v1/register/email:
     post:
       consumes:
