@@ -1,0 +1,72 @@
+{{- if .Values.services.product.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: product-service
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: product-service
+spec:
+  replicas: {{ .Values.services.product.replicaCount }}
+  selector:
+    matchLabels:
+      app: product-service
+  template:
+    metadata:
+      labels:
+        app: product-service
+    spec:
+      containers:
+        - name: product
+          image: {{ include "tutup-lapak.image" (dict "imageName" "product-service" "Values" .Values "Chart" .Chart) }}
+          imagePullPolicy: {{ .Values.global.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.services.product.port }}
+          env:
+            - name: PORT
+              value: {{ .Values.services.product.port | quote }}
+            - name: DATABASE_URL
+{{- if .Values.global.database.hardcode.enabled }}
+              value: {{ .Values.global.database.hardcode.url | quote }}
+{{- else }}
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: DATABASE_URL
+{{- end }}
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: JWT_SECRET
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.services.product.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.services.product.port }}
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+{{- if .Values.services.product.resources }}
+{{ toYaml .Values.services.product.resources | indent 12 }}
+{{- else }}
+{{ toYaml .Values.resources.default | indent 12 }}
+{{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: product-service
+  namespace: {{ .Values.global.namespace }}
+spec:
+  selector:
+    app: product-service
+  ports:
+    - port: {{ .Values.services.product.port }}
+      targetPort: {{ .Values.services.product.port }}
+{{- end }}

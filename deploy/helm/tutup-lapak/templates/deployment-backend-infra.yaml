@@ -1,0 +1,77 @@
+{{- if .Values.services.backendInfra.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-infra
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: backend-infra
+spec:
+  replicas: {{ .Values.services.backendInfra.replicaCount }}
+  selector:
+    matchLabels:
+      app: backend-infra
+  template:
+    metadata:
+      labels:
+        app: backend-infra
+    spec:
+      containers:
+        - name: gateway
+          image: {{ include "tutup-lapak.image" (dict "imageName" "backend-infra" "Values" .Values "Chart" .Chart) }}
+          imagePullPolicy: {{ .Values.global.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.services.backendInfra.port }}
+          env:
+            - name: SERVER_PORT
+              value: {{ .Values.services.backendInfra.port | quote }}
+            - name: AUTH_SERVICE_URL
+              value: "http://auth-service.{{ .Values.global.namespace }}.svc.cluster.local:{{ .Values.services.auth.port }}"
+            - name: PRODUCT_SERVICE_URL
+              value: "http://product-service.{{ .Values.global.namespace }}.svc.cluster.local:{{ .Values.services.product.port }}"
+            - name: PURCHASE_SERVICE_URL
+              value: "http://purchase-service.{{ .Values.global.namespace }}.svc.cluster.local:{{ .Values.services.purchase.port }}"
+            - name: PROFILE_SERVICE_URL
+              value: "http://profile-service.{{ .Values.global.namespace }}.svc.cluster.local:{{ .Values.services.profile.port }}"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: JWT_SECRET
+            - name: INTERNAL_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: INTERNAL_SECRET
+          readinessProbe:
+            httpGet:
+              path: /swagger
+              port: {{ .Values.services.backendInfra.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /swagger
+              port: {{ .Values.services.backendInfra.port }}
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+{{- if .Values.services.backendInfra.resources }}
+{{ toYaml .Values.services.backendInfra.resources | indent 12 }}
+{{- else }}
+{{ toYaml .Values.resources.default | indent 12 }}
+{{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-infra
+  namespace: {{ .Values.global.namespace }}
+spec:
+  selector:
+    app: backend-infra
+  ports:
+    - port: {{ .Values.services.backendInfra.port }}
+      targetPort: {{ .Values.services.backendInfra.port }}
+  type: ClusterIP
+{{- end }}

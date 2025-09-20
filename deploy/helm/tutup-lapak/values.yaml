@@ -1,0 +1,60 @@
+global:
+  namespace: gojo-infra
+  image:
+    registry: us-west1-docker.pkg.dev/projectsprint-000001/ps-docker-repo/gojo
+    tag: "latest" # override with --set global.image.tag=<commit>
+    pullPolicy: IfNotPresent
+  secrets:
+    jwtSecret: "change-me"
+    internalSecret: "backend-infra-internal-secret"
+  database:
+    # Provide URL directly OR set existingSecret.name & key
+    url: "postgres://postgres:postgres@EXTERNAL_PG_HOST:5432/tutup_lapak?sslmode=disable"
+    existingSecret:
+      name: ""
+      key: DATABASE_URL
+    hardcode:
+      enabled: false
+      url: "postgres://postgres:postgres@EXTERNAL_PG_HOST:5432/tutup_lapak?sslmode=disable" # INSECURE: only for learning/dev
+namespace:
+  create: false
+
+services:
+  auth:
+    enabled: true
+    replicaCount: 2
+    port: 3001
+    resources: {}
+  product:
+    enabled: true
+    replicaCount: 2
+    port: 3003
+    resources: {}
+  backendInfra:
+    enabled: true
+    replicaCount: 2
+    port: 3000
+    resources: {}
+  profile:
+    enabled: true
+    replicaCount: 2
+    port: 3002
+    resources: {}
+  purchase:
+    enabled: true
+    replicaCount: 2
+    port: 3004
+    resources: {}
+
+resources:
+  default:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+migrations:
+  enabled: true
+  backoffLimit: 2
