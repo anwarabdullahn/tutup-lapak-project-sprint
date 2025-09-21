@@ -1,6 +1,6 @@
 apiVersion: v2
-name: tutup-lapak
-version: 0.1.0
-description: Tutup Lapak microservices stack
-appVersion: "0.1.0"
+name: gojo-backend-infra
+description: A Helm chart for deploying Gojo backend infra
 type: application
+version: 0.1.0
+appVersion: "1.0.0"

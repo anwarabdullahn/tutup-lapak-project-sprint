@@ -1,60 +1,141 @@
-global:
-  namespace: gojo-infra
-  image:
-    registry: us-west1-docker.pkg.dev/projectsprint-000001/ps-docker-repo/gojo
-    tag: "latest" # override with --set global.image.tag=<commit>
-    pullPolicy: IfNotPresent
-  secrets:
-    jwtSecret: "change-me"
-    internalSecret: "backend-infra-internal-secret"
-  database:
-    # Provide URL directly OR set existingSecret.name & key
-    url: "postgres://postgres:postgres@EXTERNAL_PG_HOST:5432/tutup_lapak?sslmode=disable"
-    existingSecret:
-      name: ""
-      key: DATABASE_URL
-    hardcode:
-      enabled: false
-      url: "postgres://postgres:postgres@EXTERNAL_PG_HOST:5432/tutup_lapak?sslmode=disable" # INSECURE: only for learning/dev
-namespace:
-  create: false
-
 services:
-  auth:
-    enabled: true
-    replicaCount: 2
-    port: 3001
-    resources: {}
-  product:
-    enabled: true
-    replicaCount: 2
-    port: 3003
-    resources: {}
-  backendInfra:
-    enabled: true
-    replicaCount: 2
-    port: 3000
-    resources: {}
-  profile:
-    enabled: true
-    replicaCount: 2
-    port: 3002
-    resources: {}
-  purchase:
-    enabled: true
-    replicaCount: 2
-    port: 3004
-    resources: {}
+  backend-infra:
+    replicaCount: 1
+    image:
+      repository: us-west1-docker.pkg.dev/projectsprint-000001/ps-docker-repo/gojo/backend-infra
+      tag: d0d9f7f
+      pullPolicy: IfNotPresent
+    service:
+      type: ClusterIP
+      port: 3000
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 100m
+        memory: 256Mi
+    env:
+      DATABASE_URL: "postgresql://usrprd:pswdprd@gojo-postgres-postgresql:5432/db-tutup-lapak-prd?sslmode=disable"
+      DATABASE_HOST: gojo-postgres-postgresql
+      DATABASE_PORT: "5432"
+      DATABASE_NAME: db-tutup-lapak-prd
+      DATABASE_USER: usrprd
+      DATABASE_PASSWORD: pswdprd
+      REDIS_HOST: gojo-redis-master
+      REDIS_PORT: "6379"
+      SERVER_PORT: 3000
 
-resources:
-  default:
-    requests:
-      cpu: 50m
-      memory: 64Mi
-    limits:
-      cpu: 200m
-      memory: 256Mi
+  auth-service:
+    replicaCount: 1
+    image:
+      repository: us-west1-docker.pkg.dev/projectsprint-000001/ps-docker-repo/gojo/auth-service
+      tag: d0d9f7f
+      pullPolicy: IfNotPresent
+    service:
+      type: ClusterIP
+      port: 3001
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 100m
+        memory: 256Mi
+    env:
+      DATABASE_URL: "postgresql://usrprd:pswdprd@gojo-postgres-postgresql:5432/db-tutup-lapak-prd?sslmode=disable"
+      DATABASE_HOST: gojo-postgres-postgresql
+      DATABASE_PORT: "5432"
+      DATABASE_NAME: db-tutup-lapak-prd
+      DATABASE_USER: usrprd
+      DATABASE_PASSWORD: pswdprd
+      REDIS_HOST: gojo-redis-master
+      REDIS_PORT: "6379"
+      SERVER_PORT: 3001
+      JWT_SECRET: nv6FNtvAmBmUMHRSta8aSZNwiw4XAH
 
-migrations:
-  enabled: true
-  backoffLimit: 2
+  profile-service:
+    replicaCount: 1
+    image:
+      repository: us-west1-docker.pkg.dev/projectsprint-000001/ps-docker-repo/gojo/profile-service
+      tag: d0d9f7f
+      pullPolicy: IfNotPresent
+    service:
+      type: ClusterIP
+      port: 3002
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 100m
+        memory: 256Mi
+    env:
+      DATABASE_URL: "postgresql://usrprd:pswdprd@gojo-postgres-postgresql:5432/db-tutup-lapak-prd?sslmode=disable"
+      DATABASE_HOST: gojo-postgres-postgresql
+      DATABASE_PORT: "5432"
+      DATABASE_NAME: db-tutup-lapak-prd
+      DATABASE_USER: usrprd
+      DATABASE_PASSWORD: pswdprd
+      REDIS_HOST: gojo-redis-master
+      REDIS_PORT: "6379"
+      SERVER_PORT: 3002
+      JWT_SECRET: nv6FNtvAmBmUMHRSta8aSZNwiw4XAH
+
+  product-service:
+    replicaCount: 1
+    image:
+      repository: us-west1-docker.pkg.dev/projectsprint-000001/ps-docker-repo/gojo/product-service
+      tag: d0d9f7f
+      pullPolicy: IfNotPresent
+    service:
+      type: ClusterIP
+      port: 3003
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 100m
+        memory: 256Mi
+    env:
+      DATABASE_URL: "postgresql://usrprd:pswdprd@gojo-postgres-postgresql:5432/db-tutup-lapak-prd?sslmode=disable"
+      DATABASE_HOST: gojo-postgres-postgresql
+      DATABASE_PORT: "5432"
+      DATABASE_NAME: db-tutup-lapak-prd
+      DATABASE_USER: usrprd
+      DATABASE_PASSWORD: pswdprd
+      REDIS_HOST: gojo-redis-master
+      REDIS_PORT: "6379"
+      SERVER_PORT: 3003
+      JWT_SECRET: nv6FNtvAmBmUMHRSta8aSZNwiw4XAH
+
+  purchase-service:
+    replicaCount: 1
+    image:
+      repository: us-west1-docker.pkg.dev/projectsprint-000001/ps-docker-repo/gojo/purchase-service
+      tag: d0d9f7f
+      pullPolicy: IfNotPresent
+    service:
+      type: ClusterIP
+      port: 3004
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 100m
+        memory: 256Mi
+    env:
+      DATABASE_URL: "postgresql://usrprd:pswdprd@gojo-postgres-postgresql:5432/db-tutup-lapak-prd?sslmode=disable"
+      DATABASE_HOST: gojo-postgres-postgresql
+      DATABASE_PORT: "5432"
+      DATABASE_NAME: db-tutup-lapak-prd
+      DATABASE_USER: usrprd
+      DATABASE_PASSWORD: pswdprd
+      REDIS_HOST: gojo-redis-master
+      REDIS_PORT: "6379"
+      SERVER_PORT: 3004
+      JWT_SECRET: nv6FNtvAmBmUMHRSta8aSZNwiw4XAH
+      PRODUCT_SERVICE_URL: http://product-service:3003
+      USER_SERVICE_URL: http://profile-service:3002
